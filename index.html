@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>متجر Rawy</title>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#1C2742">
@@ -34,10 +34,11 @@ html { -webkit-text-size-adjust: 100%; }
 body { margin: 0; background-color: var(--paper); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.6; }
 .bg { position: fixed; inset: 0; z-index: -1; pointer-events: none; background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200' fill='none' stroke='%2334508F' stroke-opacity='.13' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'><path d='M22 20h7q5 6 10 0h7l14 10-6 10-6-4v28H22V36l-6 4-6-10z'/><path d='M140 34q0-7 7-7t7 7q0 5-7 7l-24 15h48l-24-15'/><circle cx='52' cy='140' r='11'/><circle cx='48.5' cy='136.5' r='1.4'/><circle cx='55.5' cy='136.5' r='1.4'/><circle cx='48.5' cy='143.5' r='1.4'/><circle cx='55.5' cy='143.5' r='1.4'/><path d='M118 150l44-18' stroke-dasharray='6 6'/><path d='M164 131l10-4'/><path d='M96 92l8 8M104 92l-8 8'/></svg>"), repeating-linear-gradient(135deg, rgba(52, 80, 143, .05) 0 1px, transparent 1px 8px); background-size: 200px 200px, auto; }
 .wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
+body { padding-bottom: var(--sab, env(safe-area-inset-bottom, 0px)); }
 button, input, textarea { font: inherit; color: inherit; }
 :focus-visible { outline: 3px solid var(--denim); outline-offset: 2px; }
 
-header.top { background: var(--ink) repeating-linear-gradient(135deg, rgba(255, 255, 255, .055) 0 2px, transparent 2px 7px); color: #FFFFFF; padding: 22px 0 10px; }
+header.top { background: var(--ink) repeating-linear-gradient(135deg, rgba(255, 255, 255, .055) 0 2px, transparent 2px 7px); color: #FFFFFF; padding: calc(22px + var(--sat, env(safe-area-inset-top, 0px))) 0 10px; }
 .brand {
   display: inline-flex; align-items: center; gap: 16px; margin: 0; padding: 4px 20px 8px;
   border: 2px dashed var(--tan); border-radius: 14px;
@@ -146,7 +147,7 @@ dialog p { margin: 0; padding: 18px 16px 4px; font-size: 1.05rem; }
 dialog .actions { padding: 14px 16px 18px; margin: 0; }
 dialog .btn { flex: 1 1 120px; }
 
-.bar { position: sticky; bottom: 0; background: var(--ink); color: #FFFFFF; border: 0; border-top: 2px dashed var(--tan); width: 100%; padding: 12px 16px; cursor: pointer; display: flex; justify-content: space-between; gap: 12px; align-items: center; font-weight: 700; }
+.bar { position: sticky; bottom: 0; background: var(--ink); color: #FFFFFF; border: 0; border-top: 2px dashed var(--tan); width: 100%; padding: 12px 16px calc(12px + var(--sab, env(safe-area-inset-bottom, 0px))); cursor: pointer; display: flex; justify-content: space-between; gap: 12px; align-items: center; font-weight: 700; }
 .bar[hidden] { display: none; }
 .bar b { font-variant-numeric: tabular-nums; }
 @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
