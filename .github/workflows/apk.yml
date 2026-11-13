@@ -1,0 +1,205 @@
+name: Build Rawy APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/apk.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Generate Android project
+        run: |
+          OWNER=$(echo "$GITHUB_REPOSITORY_OWNER" | tr 'A-Z' 'a-z')
+          REPO="${GITHUB_REPOSITORY#*/}"
+          SITE_URL="https://$OWNER.github.io/$REPO/"
+          echo "Site URL: $SITE_URL"
+          mkdir -p android/app/src/main/java/com/rawy/store
+          mkdir -p android/app/src/main/res/values
+          mkdir -p android/app/src/main/res/mipmap-xxhdpi
+          cp icon-192.png android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png
+
+          cat > android/settings.gradle <<'EOF'
+          pluginManagement {
+              repositories { google(); mavenCentral(); gradlePluginPortal() }
+          }
+          dependencyResolutionManagement {
+              repositories { google(); mavenCentral() }
+          }
+          rootProject.name = 'Rawy'
+          include ':app'
+          EOF
+
+          cat > android/build.gradle <<'EOF'
+          plugins {
+              id 'com.android.application' version '8.5.2' apply false
+          }
+          EOF
+
+          cat > android/app/build.gradle <<'EOF'
+          plugins {
+              id 'com.android.application'
+          }
+          android {
+              namespace 'com.rawy.store'
+              compileSdk 34
+              defaultConfig {
+                  applicationId 'com.rawy.store'
+                  minSdk 24
+                  targetSdk 34
+                  versionCode 1
+                  versionName '1.0'
+              }
+              buildTypes {
+                  release {
+                      minifyEnabled false
+                      signingConfig signingConfigs.debug
+                  }
+              }
+          }
+          EOF
+
+          cat > android/app/src/main/AndroidManifest.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android"> <uses-permission android:name="android.permission.INTERNET" /> <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" /> <application android:label="Rawy" android:icon="@mipmap/ic_launcher" android:supportsRtl="true" android:theme="@style/AppTheme"> <activity android:name=".MainActivity" android:exported="true" android:windowSoftInputMode="adjustResize" android:configChanges="orientation|screenSize|keyboardHidden"> <intent-filter> <action android:name="android.intent.action.MAIN" /> <category android:name="android.intent.category.LAUNCHER" /> </intent-filter> </activity> </application> </manifest>
+          EOF
+
+          cat > android/app/src/main/res/values/styles.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources> <style name="AppTheme" parent="android:Theme.Material.Light.NoActionBar"> <item name="android:statusBarColor">#1C2742</item> <item name="android:navigationBarColor">#1C2742</item> <item name="android:windowBackground">#1C2742</item> </style> </resources>
+          EOF
+
+          cat > android/app/src/main/java/com/rawy/store/MainActivity.java <<'EOF'
+          package com.rawy.store;
+
+          import android.app.Activity;
+          import android.content.Intent;
+          import android.graphics.Color;
+          import android.net.Uri;
+          import android.os.Build;
+          import android.os.Bundle;
+          import android.view.View;
+          import android.view.Window;
+          import android.webkit.WebResourceError;
+          import android.webkit.WebResourceRequest;
+          import android.webkit.WebSettings;
+          import android.webkit.WebView;
+          import android.webkit.WebViewClient;
+
+          public class MainActivity extends Activity {
+              private static final String SITE_URL = "__SITE_URL__";
+              private WebView web;
+              private int insetTop = 0, insetBottom = 0;
+
+              private void pushInsets() {
+                  if (web == null) return;
+                  web.evaluateJavascript("document.documentElement.style.setProperty('--sat','" + insetTop
+                      + "px');document.documentElement.style.setProperty('--sab','" + insetBottom + "px');", null);
+              }
+
+              @Override
+              protected void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+                  Window win = getWindow();
+                  win.setStatusBarColor(Color.TRANSPARENT);
+                  win.setNavigationBarColor(Color.TRANSPARENT);
+                  if (Build.VERSION.SDK_INT >= 29) win.setNavigationBarContrastEnforced(false);
+                  if (Build.VERSION.SDK_INT >= 30) {
+                      win.setDecorFitsSystemWindows(false);
+                  } else {
+                      win.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                          | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
+                  }
+                  if (Build.VERSION.SDK_INT >= 26) {
+                      // أيقونات داكنة في شريط الأسفل لأن خلفية الصفحة هناك فاتحة
+                      View d = win.getDecorView();
+                      d.setSystemUiVisibility(d.getSystemUiVisibility() | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
+                  }
+                  web = new WebView(this);
+                  web.setBackgroundColor(Color.parseColor("#1C2742"));
+                  setContentView(web);
+                  web.setOnApplyWindowInsetsListener((v, ins) -> {
+                      float dens = getResources().getDisplayMetrics().density;
+                      insetTop = Math.round(ins.getSystemWindowInsetTop() / dens);
+                      insetBottom = Math.round(ins.getSystemWindowInsetBottom() / dens);
+                      pushInsets();
+                      return ins;
+                  });
+                  WebSettings s = web.getSettings();
+                  s.setJavaScriptEnabled(true);
+                  s.setDomStorageEnabled(true);
+                  s.setCacheMode(WebSettings.LOAD_DEFAULT);
+                  web.setWebViewClient(new WebViewClient() {
+                      @Override
+                      public void onPageFinished(WebView view, String url) {
+                          pushInsets();
+                      }
+
+                      @Override
+                      public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                          Uri u = request.getUrl();
+                          String host = u.getHost();
+                          if (host != null && host.endsWith("github.io")) return false;
+                          try {
+                              startActivity(new Intent(Intent.ACTION_VIEW, u));
+                          } catch (Exception ignored) { }
+                          return true;
+                      }
+
+                      @Override
+                      public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+                          if (request.isForMainFrame()) {
+                              String html = "<html dir='rtl'><body style='font-family:sans-serif;text-align:center;padding:60px 20px;background:#F1EEE6;color:#1C2742'>"
+                                  + "<h2>مفيش إنترنت</h2><p>اتأكد من الاتصال وافتح التطبيق تاني.</p></body></html>";
+                              view.loadDataWithBaseURL(null, html, "text/html", "UTF-8", null);
+                          }
+                      }
+                  });
+                  if (savedInstanceState != null) {
+                      web.restoreState(savedInstanceState);
+                  } else {
+                      web.loadUrl(SITE_URL);
+                  }
+              }
+
+              @Override
+              protected void onSaveInstanceState(Bundle outState) {
+                  super.onSaveInstanceState(outState);
+                  web.saveState(outState);
+              }
+
+              @Override
+              public void onBackPressed() {
+                  if (web.canGoBack()) web.goBack(); else super.onBackPressed();
+              }
+          }
+          EOF
+          sed -i "s#__SITE_URL__#$SITE_URL#" android/app/src/main/java/com/rawy/store/MainActivity.java
+
+      - name: Build release APK
+        run: gradle -p android assembleRelease --no-daemon
+
+      - name: Publish APK as a release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp android/app/build/outputs/apk/release/app-release.apk Rawy.apk
+          gh release create "apk-${{ github.run_number }}" Rawy.apk \
+            --title "Rawy APK #${{ github.run_number }}" \
+            --notes "تطبيق راوي للأندرويد" --latest
