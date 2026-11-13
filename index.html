@@ -150,9 +150,20 @@ dialog .btn { flex: 1 1 120px; }
 .bar[hidden] { display: none; }
 .bar b { font-variant-numeric: tabular-nums; }
 @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+
+/* شاشة التحميل: بتفضل لحد ما المنتجات وصورها الأولى تجهز */
+#loader { position: fixed; inset: 0; z-index: 9999; background: var(--ink) repeating-linear-gradient(135deg, rgba(255,255,255,.055) 0 2px, transparent 2px 7px); color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; transition: opacity .45s ease, visibility .45s; }
+#loader.gone { opacity: 0; visibility: hidden; pointer-events: none; }
+#loader .lockup { font-family: var(--display); font-size: 2.6rem; font-weight: 700; letter-spacing: .02em; display: flex; gap: 14px; align-items: center; }
+#loader .lockup i { width: 0; height: 1.6em; border-inline-start: 2px dashed #D2A663; }
+#loader .ring { width: 46px; height: 46px; border-radius: 50%; border: 3px dashed rgba(255,255,255,.25); border-top-color: #D2A663; animation: lspin 1s linear infinite; }
+#loader p { margin: 0; font-size: .95rem; opacity: .8; }
+@keyframes lspin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { #loader .ring { animation-duration: 3s; } #loader { transition: none; } }
 </style>
 </head>
 <body>
+<div id="loader" role="status" aria-live="polite"><div class="lockup"><span>راوي</span><i></i><span dir="ltr">Rawy</span></div><div class="ring"></div><p>بنجهّز المنتجات...</p></div>
 <div class="bg" id="bg" aria-hidden="true"></div>
 
 <header class="top">
@@ -704,8 +715,22 @@ if (typeof document !== 'undefined') (function () {
     $('fine').textContent = 'بعد التأكيد هنتواصل معاك على رقم موبايلك عشان نأكد الأوردر وميعاد التوصيل.';
     fillGovs(); load(); recallCustomer();
     try { const last = localStorage.getItem('rawy-last-order'); if (last) $('follow-no').value = last; } catch (e) {}
+    setTimeout(hideLoader, 15000);   // أمان: لو حاجة اتعطلت، الصفحة تفتح برضه
     await loadProducts();
     renderFilters(); renderAll();
+    await warmImages(8, 6000);
+    hideLoader();
+  }
+  function hideLoader() {
+    const l = $('loader'); if (!l || l.classList.contains('gone')) return;
+    l.classList.add('gone'); setTimeout(() => l.remove(), 600);
+  }
+  // بيحمّل أول صورة لأول منتجات قبل ما نكشف الصفحة، بحد أقصى للوقت
+  function warmImages(count, maxMs) {
+    const urls = products.slice(0, count).map(p => { const l = slidesOf(p); return l[0] && l[0].url; }).filter(Boolean);
+    if (!urls.length) return Promise.resolve();
+    const all = Promise.all(urls.map(u => new Promise(r => { const im = new Image(); im.onload = im.onerror = r; im.src = u; })));
+    return Promise.race([all, new Promise(r => setTimeout(r, maxMs))]);
   }
   async function loadProducts() {
     const notice = $('notice');
