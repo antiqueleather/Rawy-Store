@@ -163,6 +163,15 @@ dialog .btn { flex: 1 1 120px; }
 
 
 .slide { overflow: hidden; }
+
+.colorrow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.swatches { display: flex; flex-wrap: wrap; gap: 8px; }
+.sw { position: relative; width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--ink); padding: 0; cursor: pointer; background: #fff; overflow: hidden; }
+.sw[aria-pressed="true"] { outline: 3px solid var(--denim); outline-offset: 2px; }
+.sw.out::after { content: ""; position: absolute; inset: 0; background: linear-gradient(135deg, transparent 44%, var(--ink) 44% 56%, transparent 56%); }
+.sw.txt { width: auto; border-radius: 999px; padding: 0 12px; font-size: .8rem; font-weight: 500; min-height: 28px; }
+.swname { font-size: .82rem; color: var(--muted); }
+
 /* شاشة التحميل: بتفضل لحد ما المنتجات وصورها الأولى تجهز */
 #loader { position: fixed; inset: 0; z-index: 9999; background: var(--ink) repeating-linear-gradient(135deg, rgba(255,255,255,.055) 0 2px, transparent 2px 7px); color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; transition: opacity .45s ease, visibility .45s; }
 #loader.gone { opacity: 0; visibility: hidden; pointer-events: none; }
@@ -269,7 +278,8 @@ const CONFIG = {
 /* منتجات تجريبية تظهر لحد ما الشيت يتربط */
 const SAMPLES = [
   { id: 's1', name: 'تيشرت قطن سادة أبيض', price: 250, qty: 0, stock: { S: 3, M: 5, L: 4, XL: 0 }, category: 'تيشرتات', color: '#F4F4F0', views: 3 },
-  { id: 's2', name: 'تيشرت أوفر سايز أسود', price: 320, qty: 0, stock: { M: 2, L: 4, XL: 1 }, category: 'تيشرتات', color: '#22262B', views: 3 },
+  { id: 's2', name: 'تيشرت أوفر سايز', group: 'over', colorName: 'أسود', price: 320, qty: 0, stock: { M: 2, L: 4, XL: 1 }, category: 'تيشرتات', color: '#22262B', views: 3 },
+  { id: 's2b', name: 'تيشرت أوفر سايز', group: 'over', colorName: 'أبيض', price: 320, qty: 0, stock: { M: 0, L: 3 }, category: 'تيشرتات', color: '#F4F4F0', views: 3 },
   { id: 's3', name: 'تيشرت بولو كحلي', price: 380, qty: 0, stock: { M: 2, L: 0 }, category: 'تيشرتات', color: '#24356B' },
   { id: 's4', name: 'تيشرت مخطط زيتي', price: 290, qty: 0, stock: { S: 0, M: 0, L: 0 }, category: 'تيشرتات', color: '#6B7A45' },
   { id: 's5', name: 'هودي قطن رمادي', price: 550, qty: 0, stock: { M: 1, L: 2, XL: 2, XXL: 0 }, category: 'هوديز', color: '#9AA1A6', views: 2 },
@@ -283,6 +293,9 @@ const HEADERS = {
   qty: ['qty', 'quantity', 'stock', 'الكمية', 'الكمية المتوفرة'],
   category: ['category', 'القسم', 'الفئة'],
   desc: ['description', 'desc', 'details', 'الوصف', 'التفاصيل', 'تفاصيل'],
+  group: ['group', 'model', 'المجموعة', 'مجموعة', 'الموديل', 'موديل'],
+  color: ['color', 'colour', 'اللون', 'لون'],
+  colorHex: ['color_hex', 'hex', 'color hex', 'كود اللون', 'لون كود', 'كود لون'],
   nameEn: ['name_en', 'name (en)', 'name en', 'english name', 'الاسم en', 'الاسم (en)', 'الاسم بالانجليزي', 'الاسم بالإنجليزي'],
   descEn: ['desc_en', 'description_en', 'description (en)', 'description en', 'الوصف en', 'الوصف (en)', 'الوصف بالانجليزي', 'الوصف بالإنجليزي'],
   catEn: ['category_en', 'category (en)', 'category en', 'القسم en', 'القسم (en)', 'القسم بالانجليزي', 'القسم بالإنجليزي']
@@ -325,6 +338,23 @@ function parseCSV(text) {
   if (cell !== '' || row.length) { row.push(cell); rows.push(row); }
   return rows.filter(r => r.some(x => String(x).trim() !== ''));
 }
+const COLOR_MAP = {
+  'أسود': '#1F2124', 'اسود': '#1F2124', 'black': '#1F2124', 'أبيض': '#F6F5F1', 'ابيض': '#F6F5F1', 'white': '#F6F5F1',
+  'أحمر': '#C0392B', 'احمر': '#C0392B', 'red': '#C0392B', 'أزرق': '#2F6DB5', 'ازرق': '#2F6DB5', 'blue': '#2F6DB5',
+  'كحلي': '#1F2D5C', 'navy': '#1F2D5C', 'سماوي': '#7FB8E0', 'لبني': '#9CC7E8', 'sky blue': '#7FB8E0', 'light blue': '#9CC7E8',
+  'أخضر': '#3E8E5A', 'اخضر': '#3E8E5A', 'green': '#3E8E5A', 'زيتي': '#6B7A45', 'olive': '#6B7A45',
+  'رمادي': '#9AA1A6', 'gray': '#9AA1A6', 'grey': '#9AA1A6', 'بيج': '#D8C8A8', 'beige': '#D8C8A8', 'بني': '#6B4A32', 'brown': '#6B4A32',
+  'أصفر': '#E8C23A', 'اصفر': '#E8C23A', 'yellow': '#E8C23A', 'برتقالي': '#E07B2E', 'orange': '#E07B2E',
+  'بنفسجي': '#6F4A9E', 'موف': '#8E6BB0', 'purple': '#6F4A9E', 'وردي': '#E79AB4', 'بينك': '#E79AB4', 'pink': '#E79AB4',
+  'كاكي': '#A89B6B', 'khaki': '#A89B6B', 'ذهبي': '#C9A24A', 'gold': '#C9A24A', 'فضي': '#C3C7CC', 'silver': '#C3C7CC',
+  'عنابي': '#6E1F2F', 'نبيتي': '#6E1F2F', 'burgundy': '#6E1F2F', 'بترولي': '#1F5662', 'تركواز': '#2BB3A8', 'جملي': '#B07A3C', 'camel': '#B07A3C',
+  'أوف وايت': '#EFE9DA', 'اوف وايت': '#EFE9DA', 'off white': '#EFE9DA', 'off-white': '#EFE9DA'
+};
+function colorFromName(n) { return COLOR_MAP[String(n || '').trim().toLowerCase()] || ''; }
+function hexOf(v) {
+  const t = String(v || '').trim().replace(/^#/, '');
+  return /^([0-9a-f]{3}|[0-9a-f]{6})$/i.test(t) ? '#' + t : '';
+}
 function rowsToProducts(rows) {
   if (!rows.length) return [];
   const raw = rows[0].map(h => String(h).trim());
@@ -357,7 +387,9 @@ function rowsToProducts(rows) {
       stock,
       category: get(r, 'category'),
       desc: get(r, 'desc'),
-      nameEn: get(r, 'nameEn'), descEn: get(r, 'descEn'), catEn: get(r, 'catEn')
+      nameEn: get(r, 'nameEn'), descEn: get(r, 'descEn'), catEn: get(r, 'catEn'),
+      group: get(r, 'group'), colorName: get(r, 'color'),
+      color: hexOf(get(r, 'colorHex')) || colorFromName(get(r, 'color')) || undefined
     });
   });
   return out;
@@ -402,7 +434,7 @@ function grandTotal(cart, products, fee) { return cartTotal(cart, products) + (N
 function buildPayload(cart, products, c) {
   return {
     customer: { name: c.name, phone: c.phone, gov: c.gov, address: c.address, notes: c.notes },
-    items: cart.map(l => { const p = products.find(x => x.id === l.pid); return { id: p.id, name: p.name, size: l.size, n: l.n }; })
+    items: cart.map(l => { const p = products.find(x => x.id === l.pid); return { id: p.id, base: p.name, name: p.colorName ? p.name + ' - ' + p.colorName : p.name, size: l.size, n: l.n }; })
   };
 }
 
@@ -411,6 +443,7 @@ if (typeof document !== 'undefined') (function () {
   const $ = id => document.getElementById(id);
   // ---------- اللغة ----------
   const EN = {"بنجهّز المنتجات...": "Getting products ready...", "الأوردر": "Order", "السلة فاضية. اختار المقاس ودوس \"أضف للسلة\".": "Your cart is empty. Pick a size and tap \"Add to cart\".", "الشحن": "Shipping", "الإجمالي": "Total", "الاسم": "Name", "رقم الموبايل": "Mobile number", "المحافظة": "Governorate", "العنوان بالتفصيل": "Full address", "ملاحظات (اختياري)": "Notes (optional)", "تأكيد الأوردر": "Confirm order", "امسح بياناتي المحفوظة من الجهاز ده": "Clear my saved data from this device", "تتبع أوردرك": "Track your order", "رقم الأوردر": "Order number", "رقم الموبايل اللي طلبت بيه": "Mobile number used for the order", "اعرف حالة الأوردر": "Check order status", "سيتم تسجيل الأوردر وهنتواصل معاك للتأكيد": "Your order will be recorded and we will contact you to confirm", "موافق": "OK", "لا": "No", "الأقسام": "Categories", "المنتجات": "Products", "تفاصيل المنتج": "Product details", "المقاس": "Size", "الصورة السابقة": "Previous image", "الصورة التالية": "Next image", "قلّل الكمية": "Decrease quantity", "زوّد الكمية": "Increase quantity", "احذف": "Remove", "ج.م": "EGP", "كل قطعة ليها حكاية": "Every piece has a story", "الكل": "All", "→ رجوع للمتجر": "← Back to store", "شارك المنتج": "Share product", "اتنسخ الرابط": "Link copied", "اختار المحافظة": "Choose governorate", "جديد": "New", "اتأكد": "Confirmed", "اتشحن": "Shipped", "اتسلّم": "Delivered", "ملغي": "Cancelled", "متجر Rawy": "Rawy Store", "القاهرة": "Cairo", "الجيزة": "Giza", "الإسكندرية": "Alexandria", "القليوبية": "Qalyubia", "الدقهلية": "Dakahlia", "الشرقية": "Sharqia", "الغربية": "Gharbia", "المنوفية": "Monufia", "البحيرة": "Beheira", "كفر الشيخ": "Kafr El Sheikh", "دمياط": "Damietta", "بورسعيد": "Port Said", "الإسماعيلية": "Ismailia", "السويس": "Suez", "الفيوم": "Faiyum", "بني سويف": "Beni Suef", "المنيا": "Minya", "أسيوط": "Asyut", "سوهاج": "Sohag", "قنا": "Qena", "الأقصر": "Luxor", "أسوان": "Aswan", "البحر الأحمر": "Red Sea", "الوادي الجديد": "New Valley", "مطروح": "Matrouh", "شمال سيناء": "North Sinai", "جنوب سيناء": "South Sinai", "بعد التأكيد هنتواصل معاك على رقم موبايلك عشان نأكد الأوردر وميعاد التوصيل.": "After you confirm, we will contact you on your mobile to confirm the order and delivery time.", "دي منتجات تجريبية للعرض. بعد ربط Google Sheet هتظهر منتجاتك وأسعارك وكمياتك.": "These are demo products. After linking Google Sheet, your own products, prices and quantities will appear.", "الشيت لازم يكون فيه عمود للاسم وعمود للسعر": "The sheet needs a name column and a price column", "رد غير متوقع من السكريبت": "Unexpected response from the script", "الشيت مفيهوش منتجات": "The sheet has no products"};
+  Object.assign(EN, {"أسود": "Black", "اسود": "Black", "أبيض": "White", "ابيض": "White", "أحمر": "Red", "احمر": "Red", "أزرق": "Blue", "ازرق": "Blue", "كحلي": "Navy", "سماوي": "Sky blue", "لبني": "Light blue", "أخضر": "Green", "اخضر": "Green", "زيتي": "Olive", "رمادي": "Gray", "بيج": "Beige", "بني": "Brown", "أصفر": "Yellow", "اصفر": "Yellow", "برتقالي": "Orange", "بنفسجي": "Purple", "موف": "Mauve", "وردي": "Pink", "بينك": "Pink", "كاكي": "Khaki", "ذهبي": "Gold", "فضي": "Silver", "عنابي": "Burgundy", "نبيتي": "Burgundy", "بترولي": "Petrol", "تركواز": "Turquoise", "جملي": "Camel", "أوف وايت": "Off-white", "اوف وايت": "Off-white"});
   let LANG = 'ar';
   try { LANG = localStorage.getItem('rawy-lang') === 'en' ? 'en' : 'ar'; } catch (e) {}
   const S = (ar, en) => (LANG === 'en' ? en : ar);              // جملة بصيغتين
@@ -418,6 +451,7 @@ if (typeof document !== 'undefined') (function () {
   let trCache = {};
   try { trCache = JSON.parse(localStorage.getItem('rawy-tr') || '{}') || {}; } catch (e) {}
   const L = (ar, en) => (LANG !== 'en' ? ar : (en || trCache[ar] || ar));   // نص جاي من الشيت
+  const cName = c => (LANG === 'en' ? (EN[c] || trCache[c] || c) : c);
   const pName = p => L(p.name, p.nameEn), pDesc = p => L(p.desc, p.descEn), pCat = p => L(p.category, p.catEn);
   const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
   const SVGNS = 'http://www.w3.org/2000/svg';
@@ -542,6 +576,43 @@ if (typeof document !== 'undefined') (function () {
     });
   }
 
+  // ---------- الألوان: كل لون صف في الشيت، والصفوف اللي ليها نفس المجموعة بتتعرض كمنتج واحد ----------
+  const variantSel = {};   // اسم المجموعة -> رقم الصف المختار
+  const variantsOf = p => (p.group ? products.filter(x => x.group === p.group) : [p]);
+  function pickVariant(vs) {
+    const id = variantSel[vs[0].group];
+    return vs.find(v => v.id === id) || vs.find(v => totalStock(v) > 0) || vs[0];
+  }
+  function shownProducts() {
+    const out = [], seen = new Map();
+    products.filter(p => !filter || p.category === filter).forEach(p => {
+      if (!p.group) { out.push(p); return; }
+      let g = seen.get(p.group); if (!g) { g = []; seen.set(p.group, g); out.push(g); }
+      g.push(p);
+    });
+    return out.map(x => (Array.isArray(x) ? pickVariant(x) : x));
+  }
+  function switchVariant(p, v, detail) {
+    const keep = picked[p.id];
+    variantSel[p.group] = v.id;
+    if (keep && v.stock[keep] > 0) picked[v.id] = keep;
+    if (detail) { try { history.replaceState(null, '', '#/p/' + encodeURIComponent(v.id)); } catch (e) {} }
+    renderView();
+  }
+  function swatches(p, vs, detail) {
+    const box = el('div', 'swatches'); box.setAttribute('role', 'group'); box.setAttribute('aria-label', S('اللون', 'Color'));
+    vs.forEach(v => {
+      const name = v.colorName ? cName(v.colorName) : '';
+      const b = el('button', 'sw' + (v.color ? '' : ' txt') + (totalStock(v) <= 0 ? ' out' : ''), v.color ? '' : name); b.type = 'button';
+      if (v.color) b.style.background = v.color;
+      b.title = name; b.setAttribute('aria-label', name); b.setAttribute('aria-pressed', String(v.id === p.id));
+      b.onclick = () => switchVariant(p, v, detail);
+      box.appendChild(b);
+    });
+    const cur = p.colorName ? el('span', 'swname', S('اللون: ', 'Color: ') + cName(p.colorName)) : null;
+    const wrap = el('div', 'colorrow'); wrap.appendChild(box); if (cur) wrap.appendChild(cur);
+    return wrap;
+  }
   function buildCard(p, detail) {
       const sizes = sizesOf(p);
       const sold = totalStock(p) <= 0;
@@ -569,6 +640,7 @@ if (typeof document !== 'undefined') (function () {
         : shown <= CONFIG.lowStockAt ? el('span', 'pill low', (shown === 1 ? S('آخر قطعة', 'Last piece') : S('آخر ' + shown, 'Only ' + shown + ' left')) + tail)
         : el('span', 'pill ok', S('متوفر', 'In stock')));
 
+      { const vs = variantsOf(p); if (vs.length > 1) info.appendChild(swatches(p, vs, detail)); }
       if (detail && pDesc(p)) info.appendChild(el('p', 'desc', pDesc(p)));
 
       if (sizes.length) {
@@ -613,7 +685,7 @@ if (typeof document !== 'undefined') (function () {
   }
   function renderGrid() {
     const grid = $('grid'); grid.replaceChildren();
-    products.filter(p => !filter || p.category === filter).forEach(p => {
+    shownProducts().forEach(p => {
       const { card, pic } = buildCard(p, false);
       grid.appendChild(card);
       if (pic.restore) pic.restore();
@@ -625,6 +697,7 @@ if (typeof document !== 'undefined') (function () {
   function renderView() {
     const id = routeId(); const p = id && products.find(x => x.id === id);
     if (p) {
+      if (p.group) variantSel[p.group] = p.id;
       $('filters').hidden = true; $('grid').hidden = true;
       const d = $('detail'); d.hidden = false; d.replaceChildren();
       const back = el('a', 'back', S('→ رجوع للمتجر', '← Back to store')); back.href = '#/';
@@ -674,7 +747,7 @@ if (typeof document !== 'undefined') (function () {
     cart.forEach(l => {
       const p = products.find(x => x.id === l.pid); if (!p) return;
       const li = el('li', 'line');
-      const what = el('div', 'what', pName(p));
+      const what = el('div', 'what', pName(p) + (p.colorName ? ' · ' + cName(p.colorName) : ''));
       what.appendChild(el('span', '', (l.size ? S('مقاس ', 'size ') + l.size + ' · ' : '') + money(p.price) + S(' للقطعة', ' each')));
       li.appendChild(what);
       li.appendChild(el('div', 'sum', money(p.price * l.n)));
@@ -925,7 +998,7 @@ if (typeof document !== 'undefined') (function () {
   init();
 })();
 
-if (typeof module !== 'undefined') module.exports = { parseCSV, rowsToProducts, toCsvUrl, available, totalStock, stockOf, clampCart, cartTotal, grandTotal, shippingFee, buildPayload, splitUrls, DEFAULT_SHIPPING, toNumber, CONFIG };
+if (typeof module !== 'undefined') module.exports = { colorFromName, hexOf, parseCSV, rowsToProducts, toCsvUrl, available, totalStock, stockOf, clampCart, cartTotal, grandTotal, shippingFee, buildPayload, splitUrls, DEFAULT_SHIPPING, toNumber, CONFIG };
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) { window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); }); }
 </script>
 </body>
