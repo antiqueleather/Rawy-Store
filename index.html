@@ -455,9 +455,31 @@ if (typeof document !== 'undefined') (function () {
     if (p.images && p.images.length) return p.images.map(url => ({ url }));
     return ['front', 'back', 'swatch'].slice(0, p.views || 1).map(view => ({ view }));
   }
+  // لون الحواف: بنقرا بكسلات حرف الصورة عشان نلوّن المساحة الفاضية بنفس لونها (لو موقع الصورة بيسمح، وإلا الأبيض)
+  const edgeCache = {};
+  function edgeColor(url) {
+    if (edgeCache[url]) return edgeCache[url];
+    return (edgeCache[url] = new Promise(res => {
+      const im = new Image(); im.crossOrigin = 'anonymous'; im.referrerPolicy = 'no-referrer';
+      im.onload = () => {
+        try {
+          const nw = im.naturalWidth, nh = im.naturalHeight; if (!nw || !nh) return res(null);
+          const w = nw >= nh ? 48 : Math.max(2, Math.round(48 * nw / nh)), h = nw >= nh ? Math.max(2, Math.round(48 * nh / nw)) : 48;
+          const c = document.createElement('canvas'); c.width = w; c.height = h;
+          const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(im, 0, 0, w, h);
+          let r = 0, g = 0, b = 0, n = 0;
+          const add = (px, py) => { const d = x.getImageData(px, py, 1, 1).data; if (d[3] > 128) { r += d[0]; g += d[1]; b += d[2]; n++; } };
+          if (nw / nh < 1) { for (let j = 0; j < h; j++) { add(0, j); add(w - 1, j); } }        // صورة طولية: المساحة الفاضية على الجانبين
+          else { for (let i = 0; i < w; i++) { add(i, 0); add(i, h - 1); } }                    // صورة عريضة: فوق وتحت
+          res(n ? 'rgb(' + Math.round(r / n) + ',' + Math.round(g / n) + ',' + Math.round(b / n) + ')' : null);
+        } catch (e) { res(null); }
+      };
+      im.onerror = () => res(null); im.src = url;
+    }));
+  }
   function picture(p) {
     const box = el('div', 'pic');
-    box.style.background = TILES[Math.max(0, products.indexOf(p)) % TILES.length];
+    box.style.background = (p.images && p.images.length) ? '#FFFFFF' : TILES[Math.max(0, products.indexOf(p)) % TILES.length];
     const track = el('div', 'track');
     const list = slidesOf(p);
     const nodes = list.map((s, i) => {
@@ -467,6 +489,7 @@ if (typeof document !== 'undefined') (function () {
         img.alt = pName(p) + (list.length > 1 ? S('، صورة ', ', image ') + (i + 1) : ''); img.loading = 'lazy'; img.referrerPolicy = 'no-referrer';
         img.onerror = () => { sl.replaceChildren(shirt(colorFor(p), 'front')); };
         img.src = s.url; sl.appendChild(img);
+        edgeColor(s.url).then(c => { if (c) sl.style.background = c; });
       } else sl.appendChild(shirt(colorFor(p), s.view));
       track.appendChild(sl); return sl;
     });
