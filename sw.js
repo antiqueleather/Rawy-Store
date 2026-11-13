@@ -1,6 +1,6 @@
 // يخزّن الصفحة نفسها بس عشان تفتح بسرعة. بيانات المنتجات والأوردرات دايما من الإنترنت.
-const CACHE = 'rawy-shell-v1';
-const SHELL = ['./', './index.html', './icon-192.png'];
+const CACHE = 'rawy-shell-v2';
+const SHELL = ['./', './index.html', './logo.png', './icon-192.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(k => Promise.all(k.filter(x => x !== CACHE).map(x => caches.delete(x)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', e => {

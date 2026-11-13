@@ -6,6 +6,7 @@
 <title>متجر Rawy</title>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#1C2742">
+<link rel="preload" as="image" href="logo.png">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -38,14 +39,10 @@ main.wrap { padding-bottom: var(--sab, env(safe-area-inset-bottom, 0px)); }
 button, input, textarea { font: inherit; color: inherit; }
 :focus-visible { outline: 3px solid var(--denim); outline-offset: 2px; }
 
-header.top { background: var(--ink) repeating-linear-gradient(135deg, rgba(255, 255, 255, .055) 0 2px, transparent 2px 7px); color: #FFFFFF; padding: calc(22px + var(--sat, env(safe-area-inset-top, 0px))) 0 10px; }
-.brand {
-  display: inline-flex; align-items: center; gap: 16px; margin: 0; padding: 4px 20px 8px;
-  border: 2px dashed var(--tan); border-radius: 14px;
-  font-family: var(--display); font-weight: 700; font-size: clamp(2.2rem, 9.5vw, 3.4rem); line-height: 1.25;
-}
-.brand .sep { align-self: stretch; width: 2px; margin: 8px 0 4px; background: repeating-linear-gradient(to bottom, var(--tan) 0 6px, transparent 6px 12px); }
-.brand .lat { letter-spacing: .03em; }
+header.top { position: relative; text-align: center; background: var(--ink) repeating-linear-gradient(135deg, rgba(255, 255, 255, .055) 0 2px, transparent 2px 7px); color: #FFFFFF; padding: calc(22px + var(--sat, env(safe-area-inset-top, 0px))) 0 10px; }
+.brand { display: inline-block; margin: 8px 0 0; padding: 8px 26px 12px; border: 2px dashed var(--tan); border-radius: 14px; line-height: 0; }
+.brand img { display: block; height: clamp(62px, 20vw, 92px); width: auto; }
+.lang { position: absolute; top: calc(14px + var(--sat, env(safe-area-inset-top, 0px))); inset-inline-end: 14px; border: 2px solid var(--tan); background: transparent; color: #fff; border-radius: 999px; padding: 4px 14px; font-weight: 700; font-size: .85rem; cursor: pointer; min-height: 36px; }
 .tagline { margin: 12px 0 14px; color: #D5DAE8; font-size: 1rem; }
 .stripe { border-top: 2px dashed var(--tan); }
 
@@ -165,8 +162,7 @@ dialog .btn { flex: 1 1 120px; }
 /* شاشة التحميل: بتفضل لحد ما المنتجات وصورها الأولى تجهز */
 #loader { position: fixed; inset: 0; z-index: 9999; background: var(--ink) repeating-linear-gradient(135deg, rgba(255,255,255,.055) 0 2px, transparent 2px 7px); color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; transition: opacity .45s ease, visibility .45s; }
 #loader.gone { opacity: 0; visibility: hidden; pointer-events: none; }
-#loader .lockup { font-family: var(--display); font-size: 2.6rem; font-weight: 700; letter-spacing: .02em; display: flex; gap: 14px; align-items: center; }
-#loader .lockup i { width: 0; height: 1.6em; border-inline-start: 2px dashed #D2A663; }
+#loader .loadlogo { height: 84px; width: auto; max-width: 78vw; }
 #loader .ring { width: 46px; height: 46px; border-radius: 50%; border: 3px dashed rgba(255,255,255,.25); border-top-color: #D2A663; animation: lspin 1s linear infinite; }
 #loader p { margin: 0; font-size: .95rem; opacity: .8; }
 @keyframes lspin { to { transform: rotate(360deg); } }
@@ -174,12 +170,13 @@ dialog .btn { flex: 1 1 120px; }
 </style>
 </head>
 <body>
-<div id="loader" role="status" aria-live="polite"><div class="lockup"><span>راوي</span><i></i><span dir="ltr">Rawy</span></div><div class="ring"></div><p>بنجهّز المنتجات...</p></div>
+<div id="loader" role="status" aria-live="polite"><img class="loadlogo" src="logo.png" alt="راوي Rawy"><div class="ring"></div><p>بنجهّز المنتجات...</p></div>
 <div class="bg" id="bg" aria-hidden="true"></div>
 
 <header class="top">
   <div class="wrap">
-    <h1 class="brand"><span id="brand-ar"></span><span class="sep" aria-hidden="true"></span><span class="lat" id="brand" dir="ltr"></span></h1>
+    <button class="lang" id="lang" type="button" aria-label="Language / اللغة">EN</button>
+    <h1 class="brand"><img src="logo.png" alt="راوي Rawy"></h1>
     <p class="tagline" id="tagline"></p>
   </div>
   <div class="stripe" aria-hidden="true"></div>
@@ -281,7 +278,10 @@ const HEADERS = {
   price: ['price', 'السعر'],
   qty: ['qty', 'quantity', 'stock', 'الكمية', 'الكمية المتوفرة'],
   category: ['category', 'القسم', 'الفئة'],
-  desc: ['description', 'desc', 'details', 'الوصف', 'التفاصيل', 'تفاصيل']
+  desc: ['description', 'desc', 'details', 'الوصف', 'التفاصيل', 'تفاصيل'],
+  nameEn: ['name_en', 'name (en)', 'name en', 'english name', 'الاسم en', 'الاسم (en)', 'الاسم بالانجليزي', 'الاسم بالإنجليزي'],
+  descEn: ['desc_en', 'description_en', 'description (en)', 'description en', 'الوصف en', 'الوصف (en)', 'الوصف بالانجليزي', 'الوصف بالإنجليزي'],
+  catEn: ['category_en', 'category (en)', 'category en', 'القسم en', 'القسم (en)', 'القسم بالانجليزي', 'القسم بالإنجليزي']
 };
 /* أسعار الشحن الافتراضية. بعد الربط بتتقري من تبويب "الشحن" في الشيت */
 const DEFAULT_SHIPPING = ['القاهرة', 'الجيزة', 'الإسكندرية', 'القليوبية', 'الدقهلية', 'الشرقية', 'الغربية', 'المنوفية', 'البحيرة',
@@ -352,7 +352,8 @@ function rowsToProducts(rows) {
       qty: col.qty >= 0 ? Math.max(0, Math.floor(toNumber(get(r, 'qty')))) : 0,
       stock,
       category: get(r, 'category'),
-      desc: get(r, 'desc')
+      desc: get(r, 'desc'),
+      nameEn: get(r, 'nameEn'), descEn: get(r, 'descEn'), catEn: get(r, 'catEn')
     });
   });
   return out;
@@ -366,7 +367,7 @@ function toCsvUrl(url) {
   }
   return u;
 }
-function money(n) { return Number(n).toLocaleString('en-US') + ' ' + CONFIG.currency; }
+function money(n) { return Number(n).toLocaleString('en-US') + ' ' + ((typeof document !== 'undefined' && document.documentElement.lang === 'en') ? 'EGP' : CONFIG.currency); }
 function sizesOf(p) { return Object.keys(p.stock || {}); }
 function stockOf(p, size) { return sizesOf(p).length ? (p.stock[size] || 0) : p.qty; }
 function totalStock(p) { const s = sizesOf(p); return s.length ? s.reduce((a, k) => a + p.stock[k], 0) : p.qty; }
@@ -404,6 +405,16 @@ function buildPayload(cart, products, c) {
 /* ============ الصفحة ============ */
 if (typeof document !== 'undefined') (function () {
   const $ = id => document.getElementById(id);
+  // ---------- اللغة ----------
+  const EN = {"بنجهّز المنتجات...": "Getting products ready...", "الأوردر": "Order", "السلة فاضية. اختار المقاس ودوس \"أضف للسلة\".": "Your cart is empty. Pick a size and tap \"Add to cart\".", "الشحن": "Shipping", "الإجمالي": "Total", "الاسم": "Name", "رقم الموبايل": "Mobile number", "المحافظة": "Governorate", "العنوان بالتفصيل": "Full address", "ملاحظات (اختياري)": "Notes (optional)", "تأكيد الأوردر": "Confirm order", "امسح بياناتي المحفوظة من الجهاز ده": "Clear my saved data from this device", "تتبع أوردرك": "Track your order", "رقم الأوردر": "Order number", "رقم الموبايل اللي طلبت بيه": "Mobile number used for the order", "اعرف حالة الأوردر": "Check order status", "سيتم تسجيل الأوردر وهنتواصل معاك للتأكيد": "Your order will be recorded and we will contact you to confirm", "موافق": "OK", "لا": "No", "الأقسام": "Categories", "المنتجات": "Products", "تفاصيل المنتج": "Product details", "المقاس": "Size", "الصورة السابقة": "Previous image", "الصورة التالية": "Next image", "قلّل الكمية": "Decrease quantity", "زوّد الكمية": "Increase quantity", "احذف": "Remove", "ج.م": "EGP", "كل قطعة ليها حكاية": "Every piece has a story", "الكل": "All", "→ رجوع للمتجر": "← Back to store", "شارك المنتج": "Share product", "اتنسخ الرابط": "Link copied", "اختار المحافظة": "Choose governorate", "جديد": "New", "اتأكد": "Confirmed", "اتشحن": "Shipped", "اتسلّم": "Delivered", "ملغي": "Cancelled", "متجر Rawy": "Rawy Store", "القاهرة": "Cairo", "الجيزة": "Giza", "الإسكندرية": "Alexandria", "القليوبية": "Qalyubia", "الدقهلية": "Dakahlia", "الشرقية": "Sharqia", "الغربية": "Gharbia", "المنوفية": "Monufia", "البحيرة": "Beheira", "كفر الشيخ": "Kafr El Sheikh", "دمياط": "Damietta", "بورسعيد": "Port Said", "الإسماعيلية": "Ismailia", "السويس": "Suez", "الفيوم": "Faiyum", "بني سويف": "Beni Suef", "المنيا": "Minya", "أسيوط": "Asyut", "سوهاج": "Sohag", "قنا": "Qena", "الأقصر": "Luxor", "أسوان": "Aswan", "البحر الأحمر": "Red Sea", "الوادي الجديد": "New Valley", "مطروح": "Matrouh", "شمال سيناء": "North Sinai", "جنوب سيناء": "South Sinai", "بعد التأكيد هنتواصل معاك على رقم موبايلك عشان نأكد الأوردر وميعاد التوصيل.": "After you confirm, we will contact you on your mobile to confirm the order and delivery time.", "دي منتجات تجريبية للعرض. بعد ربط Google Sheet هتظهر منتجاتك وأسعارك وكمياتك.": "These are demo products. After linking Google Sheet, your own products, prices and quantities will appear.", "الشيت لازم يكون فيه عمود للاسم وعمود للسعر": "The sheet needs a name column and a price column", "رد غير متوقع من السكريبت": "Unexpected response from the script", "الشيت مفيهوش منتجات": "The sheet has no products"};
+  let LANG = 'ar';
+  try { LANG = localStorage.getItem('rawy-lang') === 'en' ? 'en' : 'ar'; } catch (e) {}
+  const S = (ar, en) => (LANG === 'en' ? en : ar);              // جملة بصيغتين
+  const T = x => (LANG === 'en' && EN[x]) || x;                   // ترجمة من القاموس
+  let trCache = {};
+  try { trCache = JSON.parse(localStorage.getItem('rawy-tr') || '{}') || {}; } catch (e) {}
+  const L = (ar, en) => (LANG !== 'en' ? ar : (en || trCache[ar] || ar));   // نص جاي من الشيت
+  const pName = p => L(p.name, p.nameEn), pDesc = p => L(p.desc, p.descEn), pCat = p => L(p.category, p.catEn);
   const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
   const SVGNS = 'http://www.w3.org/2000/svg';
 
@@ -451,7 +462,7 @@ if (typeof document !== 'undefined') (function () {
       const sl = el('div', 'slide');
       if (s.url) {
         const img = new Image();
-        img.alt = p.name + (list.length > 1 ? '، صورة ' + (i + 1) : ''); img.loading = 'lazy'; img.referrerPolicy = 'no-referrer';
+        img.alt = pName(p) + (list.length > 1 ? S('، صورة ', ', image ') + (i + 1) : ''); img.loading = 'lazy'; img.referrerPolicy = 'no-referrer';
         img.onerror = () => { sl.replaceChildren(shirt(colorFor(p), 'front')); };
         img.src = s.url; sl.appendChild(img);
       } else sl.appendChild(shirt(colorFor(p), s.view));
@@ -461,7 +472,7 @@ if (typeof document !== 'undefined') (function () {
     if (list.length > 1) {
       const dots = el('div', 'dots');
       const ds = list.map((_, i) => {
-        const d = el('button', 'dot'); d.type = 'button'; d.setAttribute('aria-label', 'صورة ' + (i + 1) + ' من ' + list.length);
+        const d = el('button', 'dot'); d.type = 'button'; d.setAttribute('aria-label', S('صورة ' + (i + 1) + ' من ' + list.length, 'Image ' + (i + 1) + ' of ' + list.length));
         d.onclick = () => go(i, true); dots.appendChild(d); return d;
       });
       const mark = i => ds.forEach((d, k) => d.setAttribute('aria-current', String(k === i)));
@@ -472,8 +483,8 @@ if (typeof document !== 'undefined') (function () {
         slideAt[p.id] = i; mark(i);
       }
       track.addEventListener('scroll', () => { const i = current(); slideAt[p.id] = i; mark(i); }, { passive: true });
-      const prev = el('button', 'nav prev', '›'); prev.type = 'button'; prev.setAttribute('aria-label', 'الصورة السابقة'); prev.onclick = () => go(current() - 1, true);
-      const next = el('button', 'nav next', '‹'); next.type = 'button'; next.setAttribute('aria-label', 'الصورة التالية'); next.onclick = () => go(current() + 1, true);
+      const prev = el('button', 'nav prev', S('›', '‹')); prev.type = 'button'; prev.setAttribute('aria-label', S('الصورة السابقة', 'Previous image')); prev.onclick = () => go(current() - 1, true);
+      const next = el('button', 'nav next', S('‹', '›')); next.type = 'button'; next.setAttribute('aria-label', S('الصورة التالية', 'Next image')); next.onclick = () => go(current() + 1, true);
       box.append(dots, prev, next);
       box.restore = () => { if (slideAt[p.id]) go(slideAt[p.id], false); else mark(0); };
     }
@@ -485,11 +496,12 @@ if (typeof document !== 'undefined') (function () {
 
   function renderFilters() {
     const cats = [...new Set(products.map(p => p.category).filter(Boolean))];
+    const catLabel = c => { const q = products.find(p => p.category === c); return q ? pCat(q) : c; };
     const box = $('filters'); box.replaceChildren();
     if (cats.length < 2) { box.hidden = true; filter = ''; return; }
     box.hidden = false;
     ['', ...cats].forEach(c => {
-      const b = el('button', 'chip', c || 'الكل'); b.type = 'button';
+      const b = el('button', 'chip', c ? catLabel(c) : S('الكل', 'All')); b.type = 'button';
       b.setAttribute('aria-pressed', String(filter === c));
       b.onclick = () => { filter = c; renderFilters(); renderGrid(); };
       box.appendChild(b);
@@ -510,27 +522,27 @@ if (typeof document !== 'undefined') (function () {
       const pic = picture(p);
       if (!detail) pic.addEventListener('click', e => { if (!e.target.closest('button')) location.hash = '#/p/' + encodeURIComponent(p.id); });
       const sticker = el('div', 'sticker', Number(p.price).toLocaleString('en-US'));
-      sticker.appendChild(el('small', '', CONFIG.currency));
+      sticker.appendChild(el('small', '', S(CONFIG.currency, 'EGP')));
       pic.appendChild(sticker);
       card.appendChild(pic);
       const info = el('div', 'info');
       const h = el('h3', 'name');
-      if (detail) h.textContent = p.name;
-      else { const a = el('a', '', p.name); a.href = '#/p/' + encodeURIComponent(p.id); h.appendChild(a); }
+      if (detail) h.textContent = pName(p);
+      else { const a = el('a', '', pName(p)); a.href = '#/p/' + encodeURIComponent(p.id); h.appendChild(a); }
       info.appendChild(h);
-      const tail = sel ? ' مقاس ' + sel : '';
-      info.appendChild(sold ? el('span', 'pill out', 'خلص')
-        : shown <= CONFIG.lowStockAt ? el('span', 'pill low', (shown === 1 ? 'آخر قطعة' : 'آخر ' + shown) + tail)
-        : el('span', 'pill ok', 'متوفر'));
+      const tail = sel ? S(' مقاس ' + sel, ' · size ' + sel) : '';
+      info.appendChild(sold ? el('span', 'pill out', S('خلص', 'Sold out'))
+        : shown <= CONFIG.lowStockAt ? el('span', 'pill low', (shown === 1 ? S('آخر قطعة', 'Last piece') : S('آخر ' + shown, 'Only ' + shown + ' left')) + tail)
+        : el('span', 'pill ok', S('متوفر', 'In stock')));
 
-      if (detail && p.desc) info.appendChild(el('p', 'desc', p.desc));
+      if (detail && pDesc(p)) info.appendChild(el('p', 'desc', pDesc(p)));
 
       if (sizes.length) {
-        const box = el('div', 'sizes'); box.setAttribute('role', 'group'); box.setAttribute('aria-label', 'المقاس');
+        const box = el('div', 'sizes'); box.setAttribute('role', 'group'); box.setAttribute('aria-label', S('المقاس', 'Size'));
         sizes.forEach(s => {
           const b = el('button', 'size', s); b.type = 'button';
           b.disabled = !(p.stock[s] > 0);
-          if (b.disabled) b.title = 'المقاس ده خلص';
+          if (b.disabled) b.title = S('المقاس ده خلص', 'This size is sold out');
           b.setAttribute('aria-pressed', String(sel === s));
           b.onclick = () => { picked[p.id] = s; hints[p.id] = ''; renderView(); };
           box.appendChild(b);
@@ -540,11 +552,11 @@ if (typeof document !== 'undefined') (function () {
 
       const left = sizes.length ? (sel ? available(cart, p, sel) : 1) : available(cart, p, '');
       const add = el('button', 'add'); add.type = 'button';
-      if (sold) { add.textContent = 'غير متوفر'; add.disabled = true; }
-      else if (left <= 0) { add.textContent = sel ? 'كل المتوفر من ' + sel + ' في سلتك' : 'كل المتوفر في سلتك'; add.disabled = true; }
-      else add.textContent = 'أضف للسلة';
+      if (sold) { add.textContent = S('غير متوفر', 'Unavailable'); add.disabled = true; }
+      else if (left <= 0) { add.textContent = sel ? S('كل المتوفر من ' + sel + ' في سلتك', 'All available in ' + sel + ' are in your cart') : S('كل المتوفر في سلتك', 'All available stock is in your cart'); add.disabled = true; }
+      else add.textContent = S('أضف للسلة', 'Add to cart');
       add.onclick = () => {
-        if (sizes.length && !picked[p.id]) { hints[p.id] = 'اختار المقاس الأول'; renderView(); return; }
+        if (sizes.length && !picked[p.id]) { hints[p.id] = S('اختار المقاس الأول', 'Choose a size first'); renderView(); return; }
         const size = sizes.length ? picked[p.id] : '';
         if (available(cart, p, size) <= 0) return;
         const line = cart.find(l => l.pid === p.id && l.size === size);
@@ -554,11 +566,11 @@ if (typeof document !== 'undefined') (function () {
       info.appendChild(add);
       info.appendChild(el('p', 'hint', hints[p.id] || ''));
       if (detail) {
-        const sh = el('button', 'share', 'شارك المنتج'); sh.type = 'button';
+        const sh = el('button', 'share', S('شارك المنتج', 'Share product')); sh.type = 'button';
         sh.onclick = () => {
           const url = location.href;
           if (navigator.share) { navigator.share({ title: p.name, url }).catch(() => {}); return; }
-          if (navigator.clipboard) navigator.clipboard.writeText(url).then(() => { sh.textContent = 'اتنسخ الرابط'; setTimeout(() => { sh.textContent = 'شارك المنتج'; }, 1800); }).catch(() => {});
+          if (navigator.clipboard) navigator.clipboard.writeText(url).then(() => { sh.textContent = S('اتنسخ الرابط', 'Link copied'); setTimeout(() => { sh.textContent = S('شارك المنتج', 'Share product'); }, 1800); }).catch(() => {});
         };
         info.appendChild(sh);
       }
@@ -572,7 +584,7 @@ if (typeof document !== 'undefined') (function () {
       grid.appendChild(card);
       if (pic.restore) pic.restore();
     });
-    if (!grid.children.length) grid.appendChild(el('p', 'empty', 'مفيش منتجات في القسم ده دلوقتي.'));
+    if (!grid.children.length) grid.appendChild(el('p', 'empty', S('مفيش منتجات في القسم ده دلوقتي.', 'No products in this category right now.')));
   }
   function routeId() { const m = location.hash.match(/^#\/p\/(.+)$/); try { return m ? decodeURIComponent(m[1]) : ''; } catch (e) { return ''; } }
   let listY = 0;
@@ -581,7 +593,7 @@ if (typeof document !== 'undefined') (function () {
     if (p) {
       $('filters').hidden = true; $('grid').hidden = true;
       const d = $('detail'); d.hidden = false; d.replaceChildren();
-      const back = el('a', 'back', '→ رجوع للمتجر'); back.href = '#/';
+      const back = el('a', 'back', S('→ رجوع للمتجر', '← Back to store')); back.href = '#/';
       const { card, pic } = buildCard(p, true);
       d.append(back, card);
       if (pic.restore) pic.restore();
@@ -598,8 +610,8 @@ if (typeof document !== 'undefined') (function () {
   function fillGovs() {
     const sel = $('cust-gov'); const keep = sel.value;
     sel.replaceChildren();
-    const first = el('option', '', 'اختار المحافظة'); first.value = ''; sel.appendChild(first);
-    shipping.forEach(r => { const o = el('option', '', r[0] + ' (شحن ' + money(r[1]) + ')'); o.value = r[0]; sel.appendChild(o); });
+    const first = el('option', '', S('اختار المحافظة', 'Choose governorate')); first.value = ''; sel.appendChild(first);
+    shipping.forEach(r => { const o = el('option', '', T(r[0]) + ' (' + S('شحن ', 'shipping ') + money(r[1]) + ')'); o.value = r[0]; sel.appendChild(o); });
     if (shipping.some(r => r[0] === keep)) sel.value = keep;
   }
   function customer() {
@@ -609,13 +621,13 @@ if (typeof document !== 'undefined') (function () {
     };
   }
   function missing() {
-    if (!cart.length) return 'ضيف منتج واحد على الأقل للسلة.';
+    if (!cart.length) return S('ضيف منتج واحد على الأقل للسلة.', 'Add at least one item to the cart.');
     const c = customer(); const m = [];
-    if (!c.name) m.push('الاسم');
-    if (toLatinDigits(c.phone).replace(/\D/g, '').length < 10) m.push('رقم موبايل صحيح');
-    if (!c.gov) m.push('المحافظة');
-    if (!c.address) m.push('العنوان');
-    return m.length ? 'ناقص: ' + m.join('، ') + '.' : '';
+    if (!c.name) m.push(S('الاسم', 'name'));
+    if (toLatinDigits(c.phone).replace(/\D/g, '').length < 10) m.push(S('رقم موبايل صحيح', 'a valid mobile number'));
+    if (!c.gov) m.push(S('المحافظة', 'governorate'));
+    if (!c.address) m.push(S('العنوان', 'address'));
+    return m.length ? S('ناقص: ', 'Missing: ') + m.join(S('، ', ', ')) + '.' : '';
   }
 
   function renderOrder() {
@@ -623,23 +635,23 @@ if (typeof document !== 'undefined') (function () {
     cart.forEach(l => {
       const p = products.find(x => x.id === l.pid); if (!p) return;
       const li = el('li', 'line');
-      const what = el('div', 'what', p.name);
-      what.appendChild(el('span', '', (l.size ? 'مقاس ' + l.size + ' · ' : '') + money(p.price) + ' للقطعة'));
+      const what = el('div', 'what', pName(p));
+      what.appendChild(el('span', '', (l.size ? S('مقاس ', 'size ') + l.size + ' · ' : '') + money(p.price) + S(' للقطعة', ' each')));
       li.appendChild(what);
       li.appendChild(el('div', 'sum', money(p.price * l.n)));
 
       const st = el('div', 'stepper');
-      const minus = el('button', '', '−'); minus.type = 'button'; minus.setAttribute('aria-label', 'قلّل الكمية');
+      const minus = el('button', '', '−'); minus.type = 'button'; minus.setAttribute('aria-label', S('قلّل الكمية', 'Decrease quantity'));
       minus.onclick = () => { l.n--; if (l.n <= 0) cart = cart.filter(x => x !== l); save(); renderAll(); };
       const out = el('output', '', String(l.n));
-      const plus = el('button', '', '+'); plus.type = 'button'; plus.setAttribute('aria-label', 'زوّد الكمية');
+      const plus = el('button', '', '+'); plus.type = 'button'; plus.setAttribute('aria-label', S('زوّد الكمية', 'Increase quantity'));
       plus.disabled = available(cart, p, l.size) <= 0;
-      plus.title = plus.disabled ? 'دي كل الكمية المتوفرة من المقاس ده' : '';
+      plus.title = plus.disabled ? S('دي كل الكمية المتوفرة من المقاس ده', 'That is all the stock for this size') : '';
       plus.onclick = () => { if (available(cart, p, l.size) > 0) { l.n++; save(); renderAll(); } };
       st.append(minus, out, plus);
       li.appendChild(st);
 
-      const rm = el('button', 'remove', 'احذف'); rm.type = 'button';
+      const rm = el('button', 'remove', S('احذف', 'Remove')); rm.type = 'button';
       rm.onclick = () => { cart = cart.filter(x => x !== l); save(); renderAll(); };
       li.appendChild(rm);
       list.appendChild(li);
@@ -650,11 +662,11 @@ if (typeof document !== 'undefined') (function () {
     const total = grandTotal(cart, products, fee);
     $('empty').hidden = cart.length > 0;
     $('ship-row').hidden = cart.length === 0;
-    $('ship').textContent = fee == null ? 'اختار المحافظة' : money(fee);
+    $('ship').textContent = fee == null ? S('اختار المحافظة', 'Choose governorate') : money(fee);
     $('total-row').hidden = cart.length === 0;
     $('total').textContent = money(total);
     $('bar').hidden = cart.length === 0;
-    $('bar-count').textContent = 'السلة · ' + count + (count === 1 ? ' قطعة' : ' قطع');
+    $('bar-count').textContent = S('السلة · ' + count + (count === 1 ? ' قطعة' : ' قطع'), 'Cart · ' + count + (count === 1 ? ' item' : ' items'));
     $('bar-total').textContent = money(total);
     refreshSend(false);
   }
@@ -692,41 +704,41 @@ if (typeof document !== 'undefined') (function () {
   $('send').addEventListener('click', () => {
     if (missing()) { refreshSend(true); return; }
     $('msg').textContent = ''; $('done').hidden = true;
-    $('confirm-text').textContent = 'سيتم تسجيل الأوردر وهنتواصل معاك للتأكيد';
+    $('confirm-text').textContent = S('سيتم تسجيل الأوردر وهنتواصل معاك للتأكيد', 'Your order will be recorded and we will contact you to confirm');
     if (dlg.showModal) dlg.showModal(); else dlg.setAttribute('open', '');
   });
   $('no').addEventListener('click', closeDialog);
   $('yes-send').addEventListener('click', async () => {
     if (!CONFIG.ordersUrl) {
       closeDialog(); rememberCustomer();
-      $('done-title').textContent = 'تجربة: هنا هيظهر رقم الأوردر';
-      $('done-text').textContent = 'ده نموذج عرض، فالأوردر ماتبعتش لأي مكان. بعد ربط Google Sheet هيتسجل هناك وتتخصم الكمية.';
+      $('done-title').textContent = S('تجربة: هنا هيظهر رقم الأوردر', 'Demo: your order number will appear here');
+      $('done-text').textContent = S('ده نموذج عرض، فالأوردر ماتبعتش لأي مكان. بعد ربط Google Sheet هيتسجل هناك وتتخصم الكمية.', 'This is a demo, so the order was not sent anywhere. After linking Google Sheet it will be recorded there and stock deducted.');
       $('done').hidden = false;
       return;
     }
-    const btn = $('yes-send'); btn.disabled = true; btn.textContent = 'جاري التسجيل…';
+    const btn = $('yes-send'); btn.disabled = true; btn.textContent = S('جاري التسجيل…', 'Recording…');
     try {
       const res = await fetch(CONFIG.ordersUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(buildPayload(cart, products, customer())) });
       const out = await res.json();
       closeDialog();
       if (out.ok) {
         rememberCustomer();
-        $('done-title').textContent = 'الأوردر اتسجل برقم ' + out.orderNo;
-        $('done-text').textContent = 'المطلوب عند الاستلام: ' + money(out.due) + ' (منهم ' + money(out.shipping) + ' شحن).\nهنتواصل معاك على موبايلك لتأكيد الأوردر وميعاد التوصيل. احتفظ برقم الأوردر عشان تتابعه.';
+        $('done-title').textContent = S('الأوردر اتسجل برقم ', 'Order recorded, number ') + out.orderNo;
+        $('done-text').textContent = S('المطلوب عند الاستلام: ' + money(out.due) + ' (منهم ' + money(out.shipping) + ' شحن).\nهنتواصل معاك على موبايلك لتأكيد الأوردر وميعاد التوصيل. احتفظ برقم الأوردر عشان تتابعه.', 'Amount due on delivery: ' + money(out.due) + ' (including ' + money(out.shipping) + ' shipping).\nWe will contact you on your mobile to confirm the order and delivery time. Keep your order number to track it.');
         $('follow-no').value = out.orderNo; $('follow-phone').value = customer().phone;
         try { localStorage.setItem('rawy-last-order', out.orderNo); } catch (e) {}
         $('done').hidden = false;
         cart = []; save();
       } else if (out.error === 'sold_out') {
-        $('msg').textContent = 'فيه حاجة في سلتك خلصت أو كميتها قلّت: ' + (out.items || []).join('، ') + '. حدّثنا المتوفر، راجع السلة ودوس تأكيد تاني.';
+        $('msg').textContent = S('فيه حاجة في سلتك خلصت أو كميتها قلّت: ' + (out.items || []).join('، ') + '. حدّثنا المتوفر، راجع السلة ودوس تأكيد تاني.', 'Something in your cart sold out or is low: ' + (out.items || []).join(', ') + '. Stock has been refreshed; review your cart and confirm again.');
       } else {
-        $('msg').textContent = 'الأوردر ماتسجلش: ' + (out.message || 'خطأ غير معروف') + '. جرّب تاني.';
+        $('msg').textContent = S('الأوردر ماتسجلش: ' + (out.message || 'خطأ غير معروف') + '. جرّب تاني.', 'Order was not recorded: ' + (out.message || 'unknown error') + '. Please try again.');
       }
       await loadProducts(); renderFilters(); renderAll();
     } catch (err) {
       closeDialog();
-      $('msg').textContent = 'ماقدرناش نوصل لسجل الأوردرات. اتأكد من النت وجرّب تاني.';
-    } finally { btn.disabled = false; btn.textContent = 'موافق'; }
+      $('msg').textContent = S('ماقدرناش نوصل لسجل الأوردرات. اتأكد من النت وجرّب تاني.', 'Could not reach the orders log. Check your connection and try again.');
+    } finally { btn.disabled = false; btn.textContent = S('موافق', 'OK'); }
   });
   $('form').addEventListener('submit', e => e.preventDefault());
   $('form').addEventListener('input', () => refreshSend(false));
@@ -737,18 +749,18 @@ if (typeof document !== 'undefined') (function () {
     const no = $('follow-no').value.trim(), phone = $('follow-phone').value.trim();
     const say = t => { $('follow-msg').textContent = t; };
     $('follow-result').hidden = true;
-    if (!no || toLatinDigits(phone).replace(/\D/g, '').length < 10) { say('اكتب رقم الأوردر ورقم الموبايل اللي طلبت بيه.'); return; }
-    if (!CONFIG.ordersUrl) { say('تجربة: التتبع هيشتغل بعد ربط Google Sheet.'); return; }
-    const btn = $('follow-go'); btn.disabled = true; say('بندوّر على الأوردر…');
+    if (!no || toLatinDigits(phone).replace(/\D/g, '').length < 10) { say(S('اكتب رقم الأوردر ورقم الموبايل اللي طلبت بيه.', 'Enter the order number and the mobile number used.')); return; }
+    if (!CONFIG.ordersUrl) { say(S('تجربة: التتبع هيشتغل بعد ربط Google Sheet.', 'Demo: tracking will work after linking Google Sheet.')); return; }
+    const btn = $('follow-go'); btn.disabled = true; say(S('بندوّر على الأوردر…', 'Looking for your order…'));
     try {
       const url = CONFIG.ordersUrl + (CONFIG.ordersUrl.includes('?') ? '&' : '?') + 'track=' + encodeURIComponent(no) + '&phone=' + encodeURIComponent(phone);
       const out = await (await fetch(url, { cache: 'no-store' })).json();
-      if (!out.ok) { say('مالقيناش أوردر بالرقم والموبايل دول. راجعهم وجرّب تاني.'); return; }
+      if (!out.ok) { say(S('مالقيناش أوردر بالرقم والموبايل دول. راجعهم وجرّب تاني.', 'No order found for that number and mobile. Check them and try again.')); return; }
       say('');
-      $('follow-title2').textContent = 'الأوردر ' + out.orderNo + ': ' + out.status;
-      $('follow-text').textContent = 'تاريخ الطلب: ' + out.date + '\n' + out.items + '\nالمطلوب عند الاستلام: ' + money(out.due);
+      $('follow-title2').textContent = S('الأوردر ', 'Order ') + out.orderNo + ': ' + T(out.status);
+      $('follow-text').textContent = S('تاريخ الطلب: ', 'Order date: ') + out.date + '\n' + out.items + S('\nالمطلوب عند الاستلام: ', '\nAmount due on delivery: ') + money(out.due);
       $('follow-result').hidden = false;
-    } catch (err) { say('ماقدرناش نوصل لسجل الأوردرات. اتأكد من النت وجرّب تاني.'); }
+    } catch (err) { say(S('ماقدرناش نوصل لسجل الأوردرات. اتأكد من النت وجرّب تاني.', 'Could not reach the orders log. Check your connection and try again.')); }
     finally { btn.disabled = false; }
   });
   const bg = $('bg');
@@ -761,16 +773,68 @@ if (typeof document !== 'undefined') (function () {
   }
   $('bar').addEventListener('click', () => $('order').scrollIntoView({ block: 'start' }));
 
+
+  // ---------- محرك اللغة ----------
+  const AR_TEXT = new WeakMap(), AR_ARIA = new WeakMap();
+  function applyStatic() {
+    const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, { acceptNode: n => (n.parentNode && /^(SCRIPT|STYLE)$/.test(n.parentNode.nodeName)) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+    const nodes = []; while (w.nextNode()) nodes.push(w.currentNode);
+    nodes.forEach(n => {
+      const orig = AR_TEXT.has(n) ? AR_TEXT.get(n) : n.nodeValue, key = orig.trim();
+      if (!key) return;
+      if (LANG === 'en' && EN[key]) { AR_TEXT.set(n, orig); n.nodeValue = orig.replace(key, EN[key]); }
+      else if (LANG === 'ar' && AR_TEXT.has(n)) { n.nodeValue = AR_TEXT.get(n); AR_TEXT.delete(n); }
+    });
+    document.querySelectorAll('[aria-label]').forEach(e => {
+      const orig = AR_ARIA.has(e) ? AR_ARIA.get(e) : e.getAttribute('aria-label');
+      if (LANG === 'en' && EN[orig]) { AR_ARIA.set(e, orig); e.setAttribute('aria-label', EN[orig]); }
+      else if (LANG === 'ar' && AR_ARIA.has(e)) { e.setAttribute('aria-label', AR_ARIA.get(e)); AR_ARIA.delete(e); }
+    });
+  }
+  function applyLang() {
+    const html = document.documentElement;
+    html.lang = LANG; html.dir = LANG === 'en' ? 'ltr' : 'rtl';
+    document.title = LANG === 'en' ? 'Rawy Store' : 'متجر Rawy';
+    $('lang').textContent = LANG === 'en' ? 'عربي' : 'EN';
+    $('tagline').textContent = T(CONFIG.tagline);
+    $('fine').textContent = S('بعد التأكيد هنتواصل معاك على رقم موبايلك عشان نأكد الأوردر وميعاد التوصيل.', EN['بعد التأكيد هنتواصل معاك على رقم موبايلك عشان نأكد الأوردر وميعاد التوصيل.']);
+    applyStatic();
+  }
+  // ترجمة تلقائية احتياطية لأسماء/أوصاف/أقسام المنتجات اللي ملهاش ترجمة في الشيت
+  let trBusy = false;
+  async function autoTranslate() {
+    if (LANG !== 'en' || trBusy || CONFIG.autoTranslate === false) return;
+    const need = [];
+    products.forEach(p => {
+      [[p.name, p.nameEn], [p.desc, p.descEn], [p.category, p.catEn]].forEach(([ar, en]) => {
+        if (ar && !en && /[\u0600-\u06FF]/.test(ar) && !trCache[ar] && !need.includes(ar)) need.push(ar);
+      });
+    });
+    if (!need.length) return;
+    trBusy = true; let changed = false;
+    for (const txt of need.slice(0, 40)) {
+      try {
+        const r = await fetch('https://api.mymemory.translated.net/get?langpair=ar%7Cen&q=' + encodeURIComponent(txt.slice(0, 450)));
+        const j = await r.json();
+        const out = j && j.responseData && j.responseData.translatedText;
+        if (j.responseStatus === 200 && out && !/MYMEMORY|INVALID|QUERY LENGTH/i.test(out)) { trCache[txt] = out; changed = true; }
+      } catch (e) { break; }
+    }
+    trBusy = false;
+    if (changed) { try { localStorage.setItem('rawy-tr', JSON.stringify(trCache)); } catch (e) {} if (LANG === 'en') { renderFilters(); renderAll(); } }
+  }
+  $('lang').addEventListener('click', () => {
+    LANG = LANG === 'en' ? 'ar' : 'en';
+    try { localStorage.setItem('rawy-lang', LANG); } catch (e) {}
+    Object.keys(hints).forEach(k => { hints[k] = ''; }); $('msg').textContent = ''; $('follow-msg').textContent = '';
+    applyLang(); fillGovs(); renderFilters(); renderAll(); applyStatic(); autoTranslate();
+  });
   async function init() {
-    $('brand').textContent = CONFIG.storeName;
-    $('brand-ar').textContent = CONFIG.storeNameAr || '';
-    $('tagline').textContent = CONFIG.tagline;
-    $('fine').textContent = 'بعد التأكيد هنتواصل معاك على رقم موبايلك عشان نأكد الأوردر وميعاد التوصيل.';
-    fillGovs(); load(); recallCustomer();
+    applyLang(); fillGovs(); load(); recallCustomer();
     try { const last = localStorage.getItem('rawy-last-order'); if (last) $('follow-no').value = last; } catch (e) {}
     setTimeout(hideLoader, 15000);   // أمان: لو حاجة اتعطلت، الصفحة تفتح برضه
     await loadProducts();
-    renderFilters(); renderAll();
+    renderFilters(); renderAll(); applyStatic(); autoTranslate();
     await Promise.all([warmImages(8, 6000), fontsReady(4000)]);
     hideLoader();
   }
@@ -793,7 +857,7 @@ if (typeof document !== 'undefined') (function () {
   async function loadProducts() {
     const notice = $('notice');
     if (!CONFIG.ordersUrl && !CONFIG.sheetUrl) {
-      notice.textContent = 'دي منتجات تجريبية للعرض. بعد ربط Google Sheet هتظهر منتجاتك وأسعارك وكمياتك.';
+      notice.textContent = S('دي منتجات تجريبية للعرض. بعد ربط Google Sheet هتظهر منتجاتك وأسعارك وكمياتك.', T('دي منتجات تجريبية للعرض. بعد ربط Google Sheet هتظهر منتجاتك وأسعارك وكمياتك.'));
       notice.hidden = false; return;
     }
     try {
@@ -815,7 +879,7 @@ if (typeof document !== 'undefined') (function () {
       if (!list.length) throw new Error('الشيت مفيهوش منتجات');
       products = list; notice.hidden = true;
     } catch (err) {
-      notice.textContent = 'ماقدرناش نقرا المنتجات من الشيت (' + err.message + '). المعروض دلوقتي منتجات تجريبية.';
+      notice.textContent = S('ماقدرناش نقرا المنتجات من الشيت (' + err.message + '). المعروض دلوقتي منتجات تجريبية.', 'Could not read products from the sheet (' + T(err.message) + '). Showing demo products for now.');
       notice.hidden = false;
     }
   }
